@@ -1,0 +1,23 @@
+* {
+    font-size: 1rem;
+    image-rendering: pixelated;
+    user-select: none;
+    box-sizing: border-box;
+}
+:root {
+    background-color: black;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: calc(100vh);
+}
+@font-face {
+    font-family: FLjiangdouti;
+    src: url(../assets/fonts/FLjiangdouti-Regular-2.ttf);
+}
+@font-face {
+    font-family: ShanHaiZhongXiaYe;
+    src: url(../assets/fonts/ShanHaiZhongXiaYeWuYuW-2.ttf);
+}
