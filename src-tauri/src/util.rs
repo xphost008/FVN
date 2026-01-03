@@ -71,9 +71,7 @@ pub fn init_config_file() {
     let config_path = path_join!(HOME_DIR.get().unwrap(), "config.json");
     // set_file(&config_file, r#"{"version": 1, "entities": []}"#.to_string()).ok();
     let config_file = std::path::Path::new(config_path.as_str());
-    if config_file.exists() {
-        println!("{}", config_file.display());
-    } else {
+    if !config_file.exists() {
         let mut s = String::new();
         for n in 1..=100 {
             s.push_str((",\n    \"map".to_owned() + n.to_string().as_str() + r#"":{

@@ -7,15 +7,16 @@
 </script>
 
 {#if $boardText !== ""}
-    <div class="back" in:fade out:fade></div>
-    <div class="myboard" {style} in:fade out:fade>
-        {@html $boardText}
-        <MyMenuButton
-            onclick={() => boardText.set("")}
-            style="position: absolute; bottom: 4px; right: 4px;"
-        >
-            {#snippet children()}返回{/snippet}
-        </MyMenuButton>
+    <div class="back" in:fade out:fade>
+        <div class="myboard" {style}>
+            {@html $boardText}
+            <MyMenuButton
+                onclick={() => boardText.set("")}
+                style="position: absolute; bottom: 60px; right: 60px;"
+            >
+                {#snippet children()}返回{/snippet}
+            </MyMenuButton>
+        </div>
     </div>
 {/if}
 
@@ -29,16 +30,19 @@
         left: 0px;
     }
     .myboard {
-        width: calc(100vw - 300px);
-        height: calc(100vh - 200px);
+        width: 600px;
+        height: 480px;
         position: fixed;
-        top: 100px;
-        left: 150px;
-        right: 150px;
-        bottom: 100px;
-        border: 4px solid brown;
+        margin: auto;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 80px 110px;
         border-radius: 10px;
-        padding: 10px;
-        background-color: rgb(17, 111, 81);
+        background-image: url("../../assets/Home/board.png");
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
     }
 </style>

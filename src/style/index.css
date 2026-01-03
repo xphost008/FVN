@@ -6,12 +6,14 @@
 }
 :root {
     background-color: black;
+    height: calc(100vh);
 }
 
 body {
     margin: 0;
     padding: 0;
-    height: calc(100vh);
+    width: 100%;
+    height: 100%;
 }
 @font-face {
     font-family: FLjiangdouti;
