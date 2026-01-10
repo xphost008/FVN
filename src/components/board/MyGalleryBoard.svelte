@@ -9,6 +9,7 @@
     let galleryTrans = $state(new Array($galleryLock.length).fill(false));
     onMount(async () => {
         await sleep(400);
+        console.log(galleryTrans);
         for (let i = 0; i < galleryTrans.length; i++) {
             galleryTrans[i] = true;
             await sleep(100);
@@ -21,7 +22,7 @@
             easing: quadInOut,
             css: (t: number) => {
                 return `transform: rotate(${t * 360}deg)`;
-            }
+            },
         };
     }
     function rot2(node: HTMLElement) {
@@ -31,7 +32,7 @@
             easing: quadInOut,
             css: (t: number) => {
                 return `transform: rotate(${t * 360}deg)`;
-            }
+            },
         };
     }
 </script>
@@ -42,20 +43,12 @@
             onclick={() => {
                 galleryOpen.set(false);
             }}
-            style="position: absolute; bottom: 6px; right: 10px;"
+            style="position: absolute; bottom: 6px; right: 10px; z-index: 10000;"
         >
             {#snippet children()}
                 返回
             {/snippet}
         </MyMenuButton>
-        {#each $galleryLock as image, index}
-            {#if galleryTrans[index]}
-                <div in:rot1>
-                    <div class="antrans"></div>
-                    <div class="antrans2"></div>
-                </div>
-            {/if}
-        {/each}
     </div>
 {/if}
 
@@ -72,11 +65,16 @@
         background-position: center;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
     }
-    .antrans, .antrans2 {
+    .antrans {
         width: calc(100% - 8rem);
         height: calc(100% - 8rem);
         background-color: white;
         margin: 4rem;
+        position: absolute;
+    }
+    .rot1 {
+        position: relative;
     }
 </style>
