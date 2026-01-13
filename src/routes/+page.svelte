@@ -2,37 +2,48 @@
     import "../style/index.css";
     import { onMount } from "svelte";
     import MyMenuButton from "../components/input/MyMenuButton.svelte";
-    import { sleep } from "../logic/all";
-    import { boardText, galleryOpen } from "../store/store";
+    import { sleep } from "../utils/all";
+    import { boardText, mounted } from "../store/store";
     import { window } from "@tauri-apps/api";
     import MyBlackBoard from "../components/board/MyBlackBoard.svelte";
     import { quadInOut } from "svelte/easing";
     import { fade } from "svelte/transition";
-    import MyGalleryBoard from "../components/board/MyGalleryBoard.svelte";
     import MyTitleImg from "../assets/Home/title.png";
-    let o1 = false;
-    let o2 = false;
-    let o3 = false;
-    let o4 = false;
-    let o5 = false;
-    let o6 = false;
+    import { goto } from "$app/navigation";
+    let o1 = $state(false);
+    let o2 = $state(false);
+    let o3 = $state(false);
+    let o4 = $state(false);
+    let o5 = $state(false);
+    let o6 = $state(false);
     onMount(async () => {
-        o1 = true;
-        await sleep(1500);
-        o2 = true;
-        await sleep(1500);
-        o3 = true;
-        await sleep(300);
-        o4 = true;
-        await sleep(300);
-        o5 = true;
-        await sleep(300);
-        o6 = true;
+        if ($mounted) {
+            o1 = true;
+            o2 = true;
+            o3 = true;
+            o4 = true;
+            o5 = true;
+            o6 = true;
+        } else {
+            o1 = true;
+            await sleep(1500);
+            o2 = true;
+            await sleep(1500);
+            o3 = true;
+            await sleep(300);
+            o4 = true;
+            await sleep(300);
+            o5 = true;
+            await sleep(300);
+            o6 = true;
+            await sleep(300);
+            mounted.set(true);
+        }
     });
     function fadeHomeButton(node: HTMLElement) {
         return {
             delay: 0,
-            duration: 1500,
+            duration: $mounted ? 0 : 1500,
             easing: quadInOut,
             css: (t: number) =>
                 `opacity: ${t}; transform: translateX(${t * 50 - 50}px)`,
@@ -47,7 +58,7 @@
                 src={MyTitleImg}
                 class="titleImage"
                 alt="标题文字"
-                in:fade={{ duration: 1500 }}
+                in:fade={{ duration: $mounted ? 0 : 1500 }}
             />
         {/if}
         <div class="main-div">
@@ -66,8 +77,7 @@
                 <div in:fadeHomeButton>
                     <MyMenuButton
                         onclick={() => {
-                            console.log($galleryOpen);
-                            galleryOpen.set(true);
+                            goto("/gallery");
                         }}
                     >
                         {#snippet children()}
@@ -120,7 +130,6 @@
     </main>
 {/if}
 <MyBlackBoard></MyBlackBoard>
-<MyGalleryBoard></MyGalleryBoard>
 
 <style>
     .container {
