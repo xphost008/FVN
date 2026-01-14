@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import MyMenuButton from "../../../components/input/MyMenuButton.svelte";
     import { galleryLock } from "../../../store/store";
     const { params } = $props();
-    const images = $galleryLock.find((item) => item.id === params.some).images;
+    const images = $galleryLock.find((item: any) => item.id === params.some)!.images;
     let page = $state(0);
-    console.log(images[0]);
 </script>
 
 <div class="gallery" style={`background-image: url(${images[page]})`}>
@@ -13,7 +14,7 @@
         onclick={() => {
             if (page > 0) page--;
         }}
-        aria-label="点我"
+        aria-label="上一页"
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -38,7 +39,7 @@
         onclick={() => {
             if (page < images.length - 1) page++;
         }}
-        aria-label="点我"
+        aria-label="下一页"
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -57,6 +58,11 @@
             />
         </svg>
     </button>
+    <MyMenuButton style="position: absolute; bottom: 10px; right: 10px;" onclick={() => {goto('/gallery')}}>
+        {#snippet children()}
+            返回
+        {/snippet}
+    </MyMenuButton>
 </div>
 
 <style>
@@ -80,5 +86,9 @@
         outline: none;
         cursor: pointer;
         background: linear-gradient(to bottom, skyblue, green 70%);
+        transition: box-shadow 0.2s;
+    }
+    .lrbutton:hover {
+        box-shadow: 0 0 10px green;
     }
 </style>

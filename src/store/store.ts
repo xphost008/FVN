@@ -4,6 +4,7 @@ import paper2 from "../assets/Home/paper2.png";
 export const saveData = writable({});
 export const boardText = writable("");
 export const mounted = writable(false);
+export const galleryPage = writable(1)
 export const galleryLock = readable([
   {
     id: "1",
@@ -37,8 +38,8 @@ export const galleryLock = readable([
   },
   {
     id: "7",
-    lock: true,
-    images: [],
+    lock: false,
+    images: [paper, paper2, paper, paper2, paper, paper2],
   },
 ]);
 export const gamelevel = writable(-1);

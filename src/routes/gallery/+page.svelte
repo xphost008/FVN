@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import { sleep } from "../../utils/all";
-    import { galleryLock } from "../../store/store";
+    import { galleryLock, galleryPage } from "../../store/store";
     import MyMenuButton from "../../components/input/MyMenuButton.svelte";
     import { quadInOut } from "svelte/easing";
     import { onMount } from "svelte";
@@ -15,23 +15,21 @@
     let page = $state(1);
     // true 为 上一页，false 为 下一页
     async function changePages(pageControl: boolean) {
-        page = pageControl
-            ? page <= 1
-                ? 1
-                : page - 1
-            : page >= galleryPageLength
-              ? galleryPageLength
-              : page + 1;
+        page = pageControl ? page - 1 : page + 1
         if (
-            (page !== 1 && pageControl) ||
-            (page !== galleryPageLength && !pageControl)
+            (page >= 1 && pageControl) ||
+            (page <= galleryPageLength && !pageControl)
         ) {
             await load();
         }
+        if(page >= galleryPageLength) page = galleryPageLength
+        else if(page <= 1) page = 1
+        galleryPage.set(page)
     }
     async function load() {
         galleryTrans1 = new Array(pageLength).fill(false);
         galleryTrans2 = new Array(pageLength).fill(false);
+        await sleep(20);
         for (let i = 0; i < $galleryLock.length; i++) {
             galleryTrans1[i] = true;
             await sleep(200);
@@ -39,6 +37,8 @@
         }
     }
     onMount(async () => {
+        console.log($galleryPage)
+        page = $galleryPage
         o1 = true;
         await sleep(400);
         await load();
@@ -76,11 +76,7 @@
                         <button
                             in:rot2
                             class="trans trans2"
-                            style={{
-                                backgroundImage: !item.lock
-                                    ? (item.images[0] ?? GalleryBack)
-                                    : GalleryBack,
-                            }}
+                            style={`background-image: url(${!item.lock ? (item.images[0] ?? GalleryBack) : GalleryBack})`}
                             onclick={() => {
                                 if (!item.lock) goto(`/gallery/${item.id}`);
                             }}
@@ -101,7 +97,7 @@
             {/each}
         </div>
         <div
-            style="position: absolute; bottom: 14px; right: 460px; z-index: 10000; font-size: 20px; font-weight: bold"
+            style="position: fixed; bottom: 20px; right: 466px; z-index: 10000; font-size: 20px; font-weight: bold"
         >
             页码：{page} / {galleryPageLength}
         </div>
@@ -109,7 +105,7 @@
             onclick={() => {
                 changePages(true);
             }}
-            style="position: absolute; bottom: 6px; right: 290px; z-index: 10000;"
+            style="position: fixed; bottom: 10px; right: 296px; z-index: 10000;"
         >
             {#snippet children()}
                 上一页
@@ -119,7 +115,7 @@
             onclick={() => {
                 changePages(false);
             }}
-            style="position: absolute; bottom: 6px; right: 150px; z-index: 10000;"
+            style="position: fixed; bottom: 10px; right: 156px; z-index: 10000;"
         >
             {#snippet children()}
                 下一页
@@ -127,9 +123,10 @@
         </MyMenuButton>
         <MyMenuButton
             onclick={() => {
+                galleryPage.set(1)
                 goto("/");
             }}
-            style="position: absolute; bottom: 6px; right: 10px; z-index: 10000;"
+            style="position: fixed; bottom: 10px; right: 16px; z-index: 10000;"
         >
             {#snippet children()}
                 返回
@@ -169,6 +166,7 @@
     }
     .trans2 {
         transform: rotate(0);
+        background-color: white;
         background-image: url("../../assets/gallery/galleryback.png");
         background-size: 100% 100%;
         background-position: center;
