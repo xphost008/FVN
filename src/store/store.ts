@@ -4,16 +4,18 @@ import Gallery2 from "../assets/gallery/gallery2.png";
 import Gallery3 from "../assets/gallery/gallery3.png";
 import Gallery4 from "../assets/gallery/gallery4.png";
 export const saveData = writable({
-  gallery1: true,
-  gallery2: false,
-  gallery3: false,
-  gallery4: false,
-  gallery5: false,
-  gallery6: false,
-  gallery7: true,
-  gallery8: false,
-  gallery9: true,
-  gallery10: true,
+  gallery: {
+    gallery1: true,
+    gallery2: false,
+    gallery3: false,
+    gallery4: false,
+    gallery5: false,
+    gallery6: false,
+    gallery7: true,
+    gallery8: false,
+    gallery9: true,
+    gallery10: true,
+  },
 });
 export const boardText = writable("");
 export const mounted = writable(false);
@@ -25,23 +27,23 @@ export const galleryLock = readable([
   },
   {
     id: "2",
-    images: [],
+    images: [Gallery1, Gallery2, Gallery3, Gallery4],
   },
   {
     id: "3",
-    images: [],
+    images: [Gallery1, Gallery2, Gallery3, Gallery4],
   },
   {
     id: "4",
-    images: [],
+    images: [Gallery1, Gallery2, Gallery3, Gallery4],
   },
   {
     id: "5",
-    images: [],
+    images: [Gallery1, Gallery2, Gallery3, Gallery4],
   },
   {
     id: "6",
-    images: [],
+    images: [Gallery1, Gallery2, Gallery3, Gallery4],
   },
   {
     id: "7",
@@ -60,4 +62,3 @@ export const galleryLock = readable([
     images: [Gallery4, Gallery1, Gallery2, Gallery3],
   },
 ]);
-export const gamelevel = writable(-1);

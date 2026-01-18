@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { sleep } from "../../utils/all";
     import { fade } from "svelte/transition";
-    import { goto } from "$app/navigation";
+    import { router } from "../../utils/all";
     import { saveData } from "../../store/store";
     import { quadInOut } from "svelte/easing";
     import MyMenuButton from "../../components/input/MyMenuButton.svelte";
@@ -51,7 +51,7 @@
 {#if o1}
     <div class="allsave" in:fade={{ duration: 1500 }}>
         <MyMenuButton
-            onclick={() => goto("/")}
+            onclick={() => router.push("/")}
             style="position: fixed; right: 10px; bottom: 10px; z-index: 2;"
         >
             {#snippet children()}
@@ -61,30 +61,32 @@
         <div class="flex">
             {#if no}
                 <div class="grid" in:slideIn out:slideOut>
-                    {#each Object.keys($saveData.saves).filter((_, index) => {
-                        const pm = page - 1;
-                        return index >= pm * saveLength && index < pm * saveLength + saveLength;
-                    }) as item}
+                    {#each Object.keys($saveData.saveObject).filter( (_, index) => {
+                            const pm = page - 1;
+                            return index >= pm * saveLength && index < pm * saveLength + saveLength;
+                        }, ) as item}
                         <div
                             class="save bg-img-full"
-                            style={$saveData.saves[item].image
-                                ? `background-image: ${$saveData.saves[item].image}`
+                            style={$saveData.saveObject[item].image
+                                ? `background-image: ${$saveData.saveObject[item].image}`
                                 : ""}
                             in:slideIn
                             out:slideOut
                             onclick={() =>
-                                goto(`/saves/${item.replace("save", "")}`)}
-                            aria-label={$saveData.saves[item].name ??
+                                router.push(
+                                    `/saves/${item.replace("save", "")}`,
+                                )}
+                            aria-label={$saveData.saveObject[item].name ??
                                 "暂无存档"}
                             aria-hidden="true"
                         >
-                            {$saveData.saves[item].name ?? "暂无存档"}
+                            {$saveData.saveObject[item].name ?? "暂无存档"}
                         </div>
                     {/each}
                 </div>
             {/if}
             <div class="pages">
-                {#each Array(Math.ceil(Object.keys($saveData.saves).length / 4)) as _, index}
+                {#each Array(Math.ceil(Object.keys($saveData.saveObject).length / 4)) as _, index}
                     <button
                         aria-label={`第${index + 1}页`}
                         style={page === index + 1

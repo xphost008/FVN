@@ -8,8 +8,9 @@
     import MyBlackBoard from "../components/board/MyBlackBoard.svelte";
     import { quadInOut } from "svelte/easing";
     import { fade } from "svelte/transition";
+    import { showMessageBox } from "../utils/messagebox";
     import MyTitleImg from "../assets/Home/title.png";
-    import { goto } from "$app/navigation";
+    import { router } from "../utils/all";
     let o1 = $state(false);
     let o2 = $state(false);
     let o3 = $state(false);
@@ -67,7 +68,7 @@
                 <div in:fadeHomeButton>
                     <MyMenuButton
                         onclick={() => {
-                            goto("/saves");
+                            router.push("/saves");
                         }}
                     >
                         {#snippet children()}
@@ -82,7 +83,7 @@
                 <div in:fadeHomeButton>
                     <MyMenuButton
                         onclick={() => {
-                            goto("/gallery");
+                            router.push("/gallery");
                         }}
                     >
                         {#snippet children()}
@@ -98,7 +99,7 @@
                     <MyMenuButton
                         onclick={() => {
                             boardText.set(`
-        <div style="font-family: ShanHaiZhongXiaYe; color: #B22222;"><center style="font-size: 2rem;">关于与鸣谢：</center>
+        <div style="color: #B22222;"><center style="font-size: 2rem;">关于与鸣谢：</center>
         非常感谢每一位支持我的玩家！在这里着重感谢：<br>
         <!-- <span style="color: red;">秋风残叶</span> 谢谢你的陪伴，让我在游戏生涯中少走了很多弯路。<br>
         <span style="color: orange">迟暮の夜莺</span> 也同样感谢你的陪伴！<br>

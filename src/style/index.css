@@ -1,11 +1,4 @@
-* {
-    font-size: 1rem;
-    image-rendering: pixelated;
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    box-sizing: border-box;
-}
+/* 已废弃的 css 文件！ */
 :root {
     background-color: black;
     height: calc(100vh);
@@ -17,23 +10,27 @@ body {
     height: 100%;
 }
 @font-face {
-    font-family: FLjiangdouti;
-    src: url(../assets/fonts/FLjiangdouti-Regular-2.ttf);
-}
-@font-face {
-    font-family: ShanHaiZhongXiaYe;
-    src: url(../assets/fonts/ShanHaiZhongXiaYeWuYuW-2.ttf);
-}
-@font-face {
     font-family: Silver;
     src: url(../assets/fonts/Silver.ttf);
+}
+@font-face {
+    font-family: AlibabaPuHuiTi;
+    src: url(../assets/fonts/Alibaba_PuHuiTi_2.0_65_Medium_65_Medium.ttf);
 }
 .bg-img-full {
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
 }
-
+* {
+    font-size: 1rem;
+    image-rendering: pixelated;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+    font-family: AlibabaPuHuiTi;
+}
 @keyframes ash {
     0% {
         opacity: 0;

@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS galleryLock(
 )
 "#, []).ok()?;
     {
-        let tx1 = conn.transaction().ok()?;
+        let tx = conn.transaction().ok()?;
         for i in 1..=gallery_count {
-            tx1.execute(
+            tx.execute(
                 "INSERT OR IGNORE INTO galleryLock (id, lock) VALUES (?1, 0)",
                 params![&i],
             ).ok()?;
         }
-        tx1.commit().ok()?;
+        tx.commit().ok()?;
     }
     {
         let mut stmt = conn.prepare(
@@ -50,14 +50,14 @@ CREATE TABLE IF NOT EXISTS saveObject(
 )
 "#, []).ok()?;
     {
-        let tx2 = conn.transaction().ok()?;
+        let tx = conn.transaction().ok()?;
         for i in 1..=save_count {
-            tx2.execute(
+            tx.execute(
                 "INSERT OR IGNORE INTO saveObject (id, saved) VALUES (?1, 0)",
                 params![&i],
             ).ok()?;
         }
-        tx2.commit().ok()?;
+        tx.commit().ok()?;
     }
     {
         let mut stmt = conn.prepare(
@@ -85,7 +85,45 @@ CREATE TABLE IF NOT EXISTS saveObject(
                 saves.insert(format!("save{}", id), serde_json::json!({}));
             }
         }
-        result.insert("saves".to_string(), serde_json::Value::Object(saves.clone()));
+        result.insert("saveObject".to_string(), serde_json::Value::Object(saves.clone()));
+    }
+    conn.execute(r#"
+CREATE TABLE IF NOT EXISTS saveInstance(
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    current INTEGER NOT NULL DEFAULT 0
+)
+"#, []).ok()?;
+    {
+        let tx = conn.transaction().ok()?;
+        for i in 1..=save_count {
+            tx.execute(
+                "INSERT OR IGNORE INTO saveInstance (id) VALUES (?1)",
+                params![&i],
+            ).ok()?;
+        }
+        tx.commit().ok()?;
+    }
+    {
+        let mut stmt = conn.prepare(
+            "SELECT * FROM saveInstance"
+        ).ok()?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, i32>(0)?,
+                row.get::<_, Option<String>>(1)?,
+                row.get::<_, Option<i32>>(2)?,
+            ))
+        }).ok()?;
+        let mut saves = serde_json::Map::new();
+        for row in rows {
+            let (id, name, current) = row.ok()?;
+            let mut save = serde_json::Map::new();
+            save.insert("name".to_string(), serde_json::json!(name.unwrap_or_default()));
+            save.insert("current".to_string(), serde_json::json!(current.unwrap_or_default()));
+            saves.insert(format!("save{}", id), serde_json::Value::Object(save.clone()));
+        }
+        result.insert("saveInstance".to_string(), serde_json::Value::Object(saves.clone()));
     }
     let json_value = serde_json::Value::Object(result);
     Some(json_value.to_string())

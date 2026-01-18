@@ -5,7 +5,7 @@
     import MyMenuButton from "../../components/input/MyMenuButton.svelte";
     import { quadInOut } from "svelte/easing";
     import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
+    import { router } from "../../utils/all";
     import GalleryBack from "../../assets/gallery/galleryback.png";
     let galleryTrans1 = $state(new Array($galleryLock.length).fill(false));
     let galleryTrans2 = $state(new Array($galleryLock.length).fill(false));
@@ -82,7 +82,7 @@
                                         `gallery${item.id}`
                                     ]
                                 )
-                                    goto(`/gallery/${item.id}`);
+                                    router.push(`/gallery/${item.id}`);
                             }}
                             aria-labelledby="Click me!"
                         ></button>
@@ -97,7 +97,7 @@
                                         `gallery${item.id}`
                                     ]
                                 )
-                                    goto(`/gallery/${item.id}`);
+                                    router.push(`/gallery/${item.id}`);
                             }}
                             aria-labelledby="Click me!"
                         ></button>
@@ -133,7 +133,7 @@
         <MyMenuButton
             onclick={() => {
                 galleryPage.set(1);
-                goto("/");
+                router.push("/");
             }}
             style="position: fixed; bottom: 10px; right: 16px; z-index: 10000;"
         >
