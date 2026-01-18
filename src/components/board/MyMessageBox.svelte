@@ -10,7 +10,12 @@
             content: "",
             type: "info",
             buttons: [],
-            result: $messagebox.type === "input" ? inputText : content,
+            result:
+                $messagebox.type === "input"
+                    ? content === "1"
+                        ? ""
+                        : inputText
+                    : content,
         });
         inputText = "";
     }

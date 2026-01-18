@@ -128,12 +128,46 @@ CREATE TABLE IF NOT EXISTS saveInstance(
     let json_value = serde_json::Value::Object(result);
     Some(json_value.to_string())
 }
+#[tauri::command]
+fn update_save(id: String, name: String, current: i32, update_time: String, image: String) -> Option<()> {
+    let mut conn = Connection::open(path_join!(HOME_DIR.get().unwrap(), "data.db")).ok()?;
+    {
+        let tx = conn.transaction().ok()?;
+        tx.execute(
+            "UPDATE saveInstance SET name = ?1, current = ?2 WHERE id = ?3",
+            params![&name, &current, &id],
+        ).ok()?;
+        tx.commit().ok()?;
+    }
+    {
+        let tx = conn.transaction().ok()?;
+        tx.execute(
+            "UPDATE saveObject SET update_time = ?1, image = ?2, saved = 1, remark = '' WHERE id = ?3",
+            params![&update_time, &image, &id],
+        ).ok()?;
+        tx.commit().ok()?;
+    }
+    Some(())
+}
+#[tauri::command]
+fn update_gallery(id: i32) -> Option<()> {
+    let mut conn = Connection::open(path_join!(HOME_DIR.get().unwrap(), "data.db")).ok()?;
+    {
+        let tx = conn.transaction().ok()?;
+        tx.execute(
+            "UPDATE galleryLock SET lock = 1 WHERE id = ?1",
+            params![&id],
+        ).ok()?;
+        tx.commit().ok()?;
+    }
+    Some(())
+}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_home_dir();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_all_data])
+        .invoke_handler(tauri::generate_handler![get_all_data, update_save, update_gallery])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

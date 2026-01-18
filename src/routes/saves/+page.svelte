@@ -68,7 +68,7 @@
                         <div
                             class="save bg-img-full"
                             style={$saveData.saveObject[item].image
-                                ? `background-image: ${$saveData.saveObject[item].image}`
+                                ? `background-image: url(${$saveData.saveObject[item].image})`
                                 : ""}
                             in:slideIn
                             out:slideOut
@@ -80,7 +80,9 @@
                                 "暂无存档"}
                             aria-hidden="true"
                         >
-                            {$saveData.saveObject[item].name ?? "暂无存档"}
+                            {$saveData.saveObject[item].image === undefined
+                                ? "暂无存档"
+                                : ""}
                         </div>
                     {/each}
                 </div>
