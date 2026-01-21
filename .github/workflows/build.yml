@@ -13,23 +13,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            androidonly: '0'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            androidonly: '0'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            androidonly: '0'
-          - platform: 'windows-latest'
-            args: ''
-            androidonly: '0'
-          - platform: 'ubuntu-latest'
-            args: ''
-            androidonly: '1'
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: x86_64
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            platform: windows
+            arch: i686
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            platform: windows
+            arch: aarch64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos
+            arch: aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos
+            arch: x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            platform: linux
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            platform: linux
+            arch: aarch64
     
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: setup node
@@ -39,38 +52,29 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: ${{matrix.platform == 'linux'}}
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          # Additional dependencies for ARM64 building
+          sudo apt-get install -y xdg-utils
+          # Additional dependencies for RPM building
+          sudo apt-get install -y rpm
           
       - name: install frontend dependencies
         run: npm install
         
-      - uses: tauri-apps/tauri-action@v1
-      	if: ${{ matrix.androidonly == '0' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+      - name: Build the app
+        run: npm run tauri build -- --target ${{ matrix.target }}
         
-      - uses: tauri-apps/tauri-action@v1
-      	if: ${{ matrix.androidonly == '1' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: inputs.upload_artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
-          mobile: 'android'
+          name: Bundle-${{matrix.platform}}-${{matrix.arch}}
+          path: "artifacts/*"
+          if-no-files-found: error 
