@@ -85,7 +85,7 @@
         experienceIns.currentTime = 0;
         if (current === 0) {
             backStyle = "opacity: 0;";
-            liveStyleTiger = "transform: translateX(700px);";
+            liveStyleTiger = "transform: translateX(1200px);";
         } else if (current === 5) {
             liveStyleDragon = "";
         } else if (current === 6) {
@@ -107,7 +107,7 @@
             liveStyleDragon = "";
         } else if (current === 33) {
             liveStyleDragon = "";
-            liveStyleTiger = "transform: translateX(700px);";
+            liveStyleTiger = "transform: translateX(1200px);";
         } else if (current === 34) {
             liveStyleDragon = "animation: runleft 2s;";
             if (!isQuick) await sleep(2000);
@@ -125,7 +125,7 @@
         if (current >= 0 && current < 36) {
             backStyle = "opacity: 0;";
             if (current < 34) {
-                liveStyleTiger = "transform: translateX(700px);";
+                liveStyleTiger = "transform: translateX(1200px);";
             }
         }
         if (current >= 34) {
@@ -149,7 +149,7 @@
                 if (
                     (await showMessageBox(
                         "你的名字是",
-                        `你的名字是：${name}，是否me}，是否确定？`,
+                        `你的名字是：${name}，是否确定？`,
                         "info",
                         ["ok", "cancel"],
                     )) === "0"

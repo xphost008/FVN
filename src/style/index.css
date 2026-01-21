@@ -89,7 +89,7 @@ body {
 
 @keyframes runleft2 {
     0% {
-        transform: translateX(700px);
+        transform: translateX(1200px);
     }
     100% {
         transform: translateX(100px);
