@@ -104,7 +104,6 @@ jobs:
           sed -i '1i import java.io.FileInputStream' src-tauri/gen/android/app/build.gradle.kts
           sed -i '/buildType/isigningConfigs {\ncreate("release") {\nval keystorePropertiesFile = rootProject.file("keystore.properties")\nval keystoreProperties = Properties()\nif (keystorePropertiesFile.exists()) {\nkeystoreProperties.load(FileInputStream(keystorePropertiesFile))\n}\nkeyAlias = keystoreProperties["keyAlias"] as String\nkeyPassword = keystoreProperties["keyPassword"] as String\nstoreFile = file(keystoreProperties["storeFile"] as String)\nstorePassword = keystoreProperties["storePassword"] as String\n}\n}' src-tauri/gen/android/app/build.gradle.kts
           sed -i '/getByName("release")/asigningConfig = signingConfigs.getByName("release")' src-tauri/gen/android/app/build.gradle.kts
-          cat src-tauri/gen/android/app/build.gradle.kts
           npm run tauri android build --release
       - name: Upload artifact Windows
         if: ${{matrix.platform == 'windows'}}
@@ -134,5 +133,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Bundle-${{matrix.platform}}-${{matrix.arch}}
-          path: "src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
+          path: "src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
           if-no-files-found: error
