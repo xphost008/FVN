@@ -182,11 +182,18 @@
         }
         await doStyle(gc());
         let ct = replaceCurrentText($saveInstance[gc()]?.message);
+        let isLt = false;
         for (let i = 0; i < (ct?.length ?? 0); i++) {
             if (exitText) {
                 break;
             }
-            await sleep(20);
+            if (ct[i] === "<") {
+                isLt = true;
+            }
+            if (ct[i] === ">") {
+                isLt = false;
+            }
+            if (!isLt) await sleep(20);
             if (exitText) {
                 break;
             }
@@ -288,15 +295,18 @@
         setSaveMeta("image", image);
         setSaveMeta("remark", "");
         setSaveMeta("updateTime", updateTime);
+        console.log(getSaveInfo("branch1"));
         await invoke("update_save", {
             id: params.some,
             updateTime,
             image,
             name,
             current,
-            branch1: getSaveInfo("branch1"),
-            branch2: getSaveInfo("branch2"),
-            branch3: getSaveInfo("branch3"),
+            branches: [
+                getSaveInfo("branch1") ?? "",
+                getSaveInfo("branch2") ?? "",
+                getSaveInfo("branch3") ?? "",
+            ],
         });
         console.log($saveData);
     }

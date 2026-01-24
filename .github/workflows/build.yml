@@ -95,16 +95,18 @@ jobs:
         if: ${{ matrix.platform == 'android' }}
         run: |
           npm run tauri android init
-          # 生成签名
+          # 生成签名（需要调用我的秘密密钥）
           keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass ${{ secrets.MY_ANDROID_KEYTOOL_PASSWORD }} -dname "CN=xphost, OU=CandySharkStudio, O=CandySharkStudio, L=BeiJing, ST=BeiJing, C=CN"
-          # 生成配置
+          # 生成配置（需要调用我的秘密密钥）
           echo -e "storePassword=${{ secrets.MY_ANDROID_KEYTOOL_PASSWORD }}\nkeyPassword=${{ secrets.MY_ANDROID_KEYTOOL_PASSWORD }}\nkeyAlias=upload\nstoreFile=/home/runner/upload-keystore.jks" >> src-tauri/gen/android/keystore.properties
           # 修改 build.gradle.kts
-          cat src-tauri/gen/android/app/build.gradle.kts
+          # 首行新增一行 import
           sed -i '1i import java.io.FileInputStream' src-tauri/gen/android/app/build.gradle.kts
+          # 随后找到 buildType 那一行的往上新增一句话。
           sed -i '/buildType/isigningConfigs {\ncreate("release") {\nval keystorePropertiesFile = rootProject.file("keystore.properties")\nval keystoreProperties = Properties()\nif (keystorePropertiesFile.exists()) {\nkeystoreProperties.load(FileInputStream(keystorePropertiesFile))\n}\nkeyAlias = keystoreProperties["keyAlias"] as String\nkeyPassword = keystoreProperties["keyPassword"] as String\nstoreFile = file(keystoreProperties["storeFile"] as String)\nstorePassword = keystoreProperties["storePassword"] as String\n}\n}' src-tauri/gen/android/app/build.gradle.kts
+          # 最后在 getByName("release") 底下新增一行，完事！
           sed -i '/getByName("release")/asigningConfig = signingConfigs.getByName("release")' src-tauri/gen/android/app/build.gradle.kts
-          # 开始构建！！
+          # 最后再开始打包 Android。。 开始构建！！
           npm run tauri android build -- --target ${{ matrix.arch }}
       - name: Upload artifact Windows
         if: ${{matrix.platform == 'windows'}}

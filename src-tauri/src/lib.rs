@@ -3,103 +3,11 @@ pub mod util;
 use rusqlite::*;
 use util::*;
 
-const TABLE_NAME: &str = "saveInstance";
-
-fn fetch_all_data(conn: &Connection) -> Result<serde_json::Value> {
-    todo!()
-}
-
-fn get_existing_b_columns(conn: &Connection) -> Result<std::collections::HashSet<String>> {
-    let mut columns = std::collections::HashSet::new();
-
-    let sql = format!("PRAGMA table_info({})", TABLE_NAME);
-    let mut stmt = conn.prepare(&sql)?;
-
-    let rows = stmt.query_map([], |row| Ok(row.get::<_, String>(1)?))?;
-
-    for row in rows {
-        let column_name: String = row?;
-        if column_name.starts_with("branch") {
-            columns.insert(column_name);
-        }
-    }
-
-    Ok(columns)
-}
-
-fn update_table_structure(conn: &mut Connection, target_count: u32) -> Result<()> {
-    let existing_columns = get_existing_b_columns(conn)?;
-
-    for i in 1..=target_count {
-        let column_name = format!("b{}", i);
-
-        if !existing_columns.contains(&column_name) {
-            let sql = format!(
-                "ALTER TABLE {} ADD COLUMN {} TEXT NOT NULL DEFAULT ''",
-                TABLE_NAME, column_name
-            );
-            if let Err(e) = conn.execute(&sql, []) {
-                eprintln!("添加列 {} 失败（可能已存在）: {}", column_name, e);
-            }
-        }
-    }
-
-    let existing_b_count = existing_columns.len() as u32;
-    if target_count < existing_b_count {
-        migrate_table(conn, target_count)?;
-    }
-
-    Ok(())
-}
-fn migrate_table(conn: &mut Connection, target_count: u32) -> Result<()> {
-    let transaction = conn.transaction()?;
-
-    let temp_table = format!("{}_temp", TABLE_NAME);
-
-    let mut columns = String::new();
-    for i in 1..=target_count {
-        if i > 1 {
-            columns.push_str(", ");
-        }
-        columns.push_str(&format!("branch{} TEXT", i));
-    }
-
-    let create_sql = format!(
-        "CREATE TABLE {} (id INTEGER PRIMARY KEY AUTOINCREMENT, {})",
-        temp_table, columns
-    );
-    transaction.execute(&create_sql, [])?;
-    let mut source_columns = String::new();
-    let mut target_columns = String::new();
-
-    for i in 1..=target_count {
-        if i > 1 {
-            source_columns.push_str(", ");
-            target_columns.push_str(", ");
-        }
-        source_columns.push_str(&format!("branch{}", i));
-        target_columns.push_str(&format!("branch{}", i));
-    }
-
-    let copy_sql = format!(
-        "INSERT INTO {} (id, {}) SELECT id, {} FROM {}",
-        temp_table, target_columns, source_columns, TABLE_NAME
-    );
-    transaction.execute(&copy_sql, [])?;
-    transaction.execute(&format!("DROP TABLE {}", TABLE_NAME), [])?;
-    transaction.execute(
-        &format!("ALTER TABLE {} RENAME TO {}", temp_table, TABLE_NAME),
-        [],
-    )?;
-
-    transaction.commit()?;
-    Ok(())
-}
-
 #[tauri::command]
 fn get_all_data(gallery_count: i32, save_count: i32, branch_count: i32) -> Option<String> {
     let mut conn = Connection::open(path_join!(HOME_DIR.get().unwrap(), "data.db")).ok()?;
     let mut result = serde_json::Map::new();
+    // 新增画廊数据库表
     conn.execute(
         r#"
 CREATE TABLE IF NOT EXISTS galleryLock(
@@ -110,6 +18,7 @@ CREATE TABLE IF NOT EXISTS galleryLock(
         [],
     )
     .ok()?;
+    // 为画廊数据库表塞入 gallery_count 个数据，每个数据有 0 和 1 两种状态！
     {
         let tx = conn.transaction().ok()?;
         for i in 1..=gallery_count {
@@ -121,9 +30,9 @@ CREATE TABLE IF NOT EXISTS galleryLock(
         }
         tx.commit().ok()?;
     }
+    // 查询所有的画廊数据，如果为 1 则开启，否则锁定！
     {
         let mut stmt = conn.prepare("SELECT id, lock FROM galleryLock").ok()?;
-
         let rows = stmt
             .query_map([], |row| Ok((row.get::<_, i32>(0)?, row.get::<_, i32>(1)?)))
             .ok()?;
@@ -140,6 +49,7 @@ CREATE TABLE IF NOT EXISTS galleryLock(
             serde_json::Value::Object(gallery.clone()),
         );
     }
+    // 新增存档对象表
     conn.execute(
         r#"
 CREATE TABLE IF NOT EXISTS saveObject(
@@ -153,6 +63,7 @@ CREATE TABLE IF NOT EXISTS saveObject(
         [],
     )
     .ok()?;
+    // 为存档对象表塞入 save_count 个数据，每个数据包含 4 个字段！
     {
         let tx = conn.transaction().ok()?;
         for i in 1..=save_count {
@@ -164,6 +75,7 @@ CREATE TABLE IF NOT EXISTS saveObject(
         }
         tx.commit().ok()?;
     }
+    // 查询所有字段！
     {
         let mut stmt = conn.prepare("SELECT * FROM saveObject").ok()?;
         let rows = stmt
@@ -201,6 +113,7 @@ CREATE TABLE IF NOT EXISTS saveObject(
             serde_json::Value::Object(saves.clone()),
         );
     }
+    // 新建存档元数据表（当前只新增两个元数据，第一个是玩家名称，第二个是当前进度。后续所有的分支全部转入下方自主实现！）
     conn.execute(
         r#"
 CREATE TABLE IF NOT EXISTS saveInstance(
@@ -223,27 +136,69 @@ CREATE TABLE IF NOT EXISTS saveInstance(
         }
         tx.commit().ok()?;
     }
-    update_table_structure(&mut conn, branch_count as u32).ok()?;
+    // 以下是添加或者减少 branch 字段，以适配 branch_count 参数！
+    {
+        let mut branches = Vec::new();
+        let mut stmt = conn.prepare("PRAGMA table_info(saveInstance)").ok()?;
+        let rows = stmt
+            .query_map([], |row| Ok(row.get::<_, String>(1)?))
+            .ok()?;
+        for row in rows {
+            let branch_name = row.ok()?;
+            if branch_name.starts_with("branch") {
+                branches.push(branch_name)
+            }
+        }
+        for i in 1..=branch_count {
+            let column_name = format!("branch{}", i);
+            if !branches.contains(&column_name) {
+                let sql = format!(
+                    "ALTER TABLE saveInstance ADD COLUMN {} TEXT NOT NULL DEFAULT ''",
+                    column_name
+                );
+                conn.execute(&sql, []).ok()?;
+            }
+        }
+        for column_name in &branches {
+            if let Some(col_num) = column_name.strip_prefix("branch") {
+                if let Ok(num) = col_num.parse::<u32>() {
+                    if num > branch_count as u32 {
+                        let sql = format!("ALTER TABLE saveInstance DROP COLUMN {}", column_name);
+                        conn.execute(&sql, []).ok()?;
+                    }
+                }
+            }
+        }
+    }
+    // 以下开始查询存档元数据分步并读取进 JSON！
     {
         let mut stmt = conn.prepare("SELECT * FROM saveInstance").ok()?;
         let rows = stmt
             .query_map([], |row| {
-                Ok((
-                    row.get::<_, i32>(0)?,
-                    row.get::<_, Option<String>>(1)?,
-                    row.get::<_, i32>(2)?,
-                ))
+                let id: i32 = row.get(0)?;
+                let name: Option<String> = row.get(1)?;
+                let current: i32 = row.get(2)?;
+                let mut branches = std::collections::HashMap::new();
+                for i in 3..(branch_count + 3) {
+                    if let Ok(value) = row.get::<_, String>(i as usize) {
+                        branches.insert(format!("branch{}", i - 2), value);
+                    }
+                }
+                Ok((id, name, current, branches))
             })
             .ok()?;
         let mut saves = serde_json::Map::new();
         for row in rows {
-            let (id, name, current) = row.ok()?;
+            let (id, name, current, branches) = row.ok()?;
             let mut save = serde_json::Map::new();
             save.insert(
                 "name".to_string(),
                 serde_json::json!(name.unwrap_or_default()),
             );
             save.insert("current".to_string(), serde_json::json!(current));
+            for (key, value) in branches {
+                save.insert(key, serde_json::json!(value));
+            }
             saves.insert(
                 format!("save{}", id),
                 serde_json::Value::Object(save.clone()),
@@ -264,27 +219,27 @@ fn update_save(
     image: String,
     name: String,
     current: i32,
-    branch1: String,
-    branch2: String,
-    branch3: i32,
+    branches: Vec<String>,
 ) -> Option<()> {
-    let mut conn = Connection::open(path_join!(HOME_DIR.get().unwrap(), "data.db")).ok()?;
-    {
-        let tx = conn.transaction().ok()?;
-        tx.execute(
-            "UPDATE saveObject SET update_time = ?1, image = ?2, saved = 1, remark = '' WHERE id = ?3",
-            params![&update_time, &image, &id],
-        ).ok()?;
-        tx.commit().ok()?;
+    let conn = Connection::open(path_join!(HOME_DIR.get().unwrap(), "data.db")).ok()?;
+    conn.execute(
+        "UPDATE saveObject SET update_time = ?1, image = ?2, saved = 1, remark = '' WHERE id = ?3",
+        params![&update_time, &image, &id],
+    )
+    .ok()?;
+    let mut branch_temp = String::new();
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> =
+        vec![Box::new(name.clone()), Box::new(current), Box::new(id)];
+    for (i, branch_value) in branches.iter().enumerate() {
+        branch_temp.push_str(&format!(", branch{} = ?{}", i + 1, i + 4));
+        params.push(Box::new(branch_value.clone()));
     }
-    {
-        let tx = conn.transaction().ok()?;
-        tx.execute(
-            "UPDATE saveInstance SET name = ?1, current = ?2, branch1 = ?4, branch2 = ?5, branch3 = ?6 WHERE id = ?3",
-            params![&name, &current, &id, &branch1, &branch2, &branch3],
-        ).ok()?;
-        tx.commit().ok()?;
-    }
+    let sql = format!(
+        "UPDATE saveInstance SET name = ?1, current = ?2{} WHERE id = ?3",
+        branch_temp
+    );
+    let params_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| &**p).collect();
+    conn.execute(&sql, &*params_refs).ok()?;
     Some(())
 }
 #[tauri::command]

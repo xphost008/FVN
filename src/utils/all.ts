@@ -9,6 +9,7 @@ export async function init() {
     await invoke("get_all_data", {
       galleryCount: 10,
       saveCount: 40,
+      branchCount: 3,
     }),
   );
   console.log(savedata);
@@ -16,7 +17,7 @@ export async function init() {
 }
 
 export const router = {
-  push: (path) => goto(path),
-  replace: (path) => goto(path, { replaceState: true }),
+  push: (path: string) => goto(path),
+  replace: (path: string) => goto(path, { replaceState: true }),
   back: () => window.history.back(),
 };

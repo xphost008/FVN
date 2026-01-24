@@ -11,6 +11,7 @@ pub fn init_home_dir(app_handle: &tauri::AppHandle) -> Result<(), String> {
     HOME_DIR
         .set(home_dir.to_string_lossy().to_string())
         .map_err(|_| "Cannot put all value!".to_string())?;
+    create_dir(HOME_DIR.get().unwrap());
     Ok(())
 }
 pub fn create_dir(path: &str) -> bool {
