@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { fade } from "svelte/transition";
     import MyMessageBox from "../../../components/board/MyMessageBox.svelte";
-    import { saveData, saveInstance, branchs } from "../../../store/store";
+    import { saveData, dialogInstance, branchs } from "../../../store/store";
     import { showMessageBox } from "../../../utils/messagebox";
     import { sleep, router } from "../../../utils/all";
     import { invoke } from "@tauri-apps/api/core";
@@ -105,33 +105,33 @@
         } else if (current === 12) {
             pianoIns.play();
             liveStyleDragon = "";
-        } else if (current === 33) {
+        } else if (current === 35) {
             liveStyleDragon = "";
             liveStyleTiger = "transform: translateX(1200px);";
-        } else if (current === 34) {
+        } else if (current === 36) {
             liveStyleDragon = "animation: runleft 2s;";
             if (!isQuick) await sleep(2000);
             liveStyleDragon = "transform: translateX(-200px) rotateY(180deg);";
             liveStyleTiger = "animation: runleft2 1s";
             if (!isQuick) await sleep(1000);
             liveStyleTiger = "transform: translateX(100px)";
-        } else if (current === 35) {
+        } else if (current === 37) {
             backStyle = "opacity: 0;";
-        } else if (current === 36) {
+        } else if (current === 38) {
             backStyle = "animation: opac1 0.5s";
             if (!isQuick) await sleep(500);
             backStyle = "opacity: 1";
         }
         if (current >= 0 && current < 36) {
             backStyle = "opacity: 0;";
-            if (current < 34) {
+            if (current < 36) {
                 liveStyleTiger = "transform: translateX(1200px);";
             }
         }
-        if (current >= 34) {
+        if (current >= 36) {
             liveStyleDragon = "transform: translateX(-200px) rotateY(180deg);";
             liveStyleTiger = "transform: translateX(100px)";
-            if (current >= 36) {
+            if (current >= 38) {
                 backStyle = "opacity: 1";
             }
         }
@@ -165,13 +165,13 @@
         next(false);
     });
     async function next(plus: boolean = true) {
-        if (gc() >= $saveInstance.length) {
+        if (gc() >= $dialogInstance.length) {
             return;
         }
-        if (!$saveInstance[gc()]?.message) return;
+        if (!$dialogInstance[gc()]?.message) return;
         if (lockText) {
             exitText = true;
-            currentText = replaceCurrentText($saveInstance[gc()]?.message);
+            currentText = replaceCurrentText($dialogInstance[gc()]?.message);
             return;
         }
         lockText = true;
@@ -181,7 +181,7 @@
             plusOne();
         }
         await doStyle(gc());
-        let ct = replaceCurrentText($saveInstance[gc()]?.message);
+        let ct = replaceCurrentText($dialogInstance[gc()]?.message);
         let isLt = false;
         for (let i = 0; i < (ct?.length ?? 0); i++) {
             if (exitText) {
@@ -216,14 +216,20 @@
     }
     function jumpTo(ps: boolean) {
         while (true) {
-            const j = $saveInstance[gc() + (ps ? 1 : -1)]?.if;
+            const j = $dialogInstance[gc() + (ps ? 1 : -1)]?.if;
             if (j) {
                 let count = 0;
                 for (let i = 0; i < j.length; i++) {
                     const key = j[i]?.key;
                     const value = j[i]?.value;
-                    if (getSaveInfo(key) === value) {
-                        count++;
+                    if (typeof value === "function") {
+                        if (value(getSaveInfo(key))) {
+                            count++;
+                        }
+                    } else {
+                        if (getSaveInfo(key) === value) {
+                            count++;
+                        }
                     }
                 }
                 if (count >= j.length) {
@@ -233,8 +239,8 @@
             } else {
                 break;
             }
-            // const key = $saveInstance[gc() + (ps ? 1 : -1)]?.key;
-            // const value = $saveInstance[gc() + (ps ? 1 : -1)]?.value;
+            // const key = $dialogInstance[gc() + (ps ? 1 : -1)]?.key;
+            // const value = $dialogInstance[gc() + (ps ? 1 : -1)]?.value;
             // console.log(key, value, 2222);
             // if (key && value) {
             //     if (getSaveInfo(key) === value) {
@@ -251,22 +257,22 @@
         jumpTo(false);
         minusOne();
         doStyle(gc(), true);
-        currentText = replaceCurrentText($saveInstance[gc()]?.message);
+        currentText = replaceCurrentText($dialogInstance[gc()]?.message);
     }
     async function quick() {
         quickCurrent = !quickCurrent;
         while (true) {
             if (
                 !quickCurrent ||
-                gc() >= $saveInstance.length ||
-                !$saveInstance[gc()]?.message
+                gc() >= $dialogInstance.length ||
+                !$dialogInstance[gc()]?.message
             )
                 break;
             jumpTo(true);
             await sleep(50);
             plusOne();
             await doStyle(gc(), true);
-            currentText = replaceCurrentText($saveInstance[gc()]?.message);
+            currentText = replaceCurrentText($dialogInstance[gc()]?.message);
         }
     }
     function spaceDown(e: KeyboardEvent) {
@@ -295,7 +301,6 @@
         setSaveMeta("image", image);
         setSaveMeta("remark", "");
         setSaveMeta("updateTime", updateTime);
-        console.log(getSaveInfo("branch1"));
         await invoke("update_save", {
             id: params.some,
             updateTime,
@@ -352,23 +357,32 @@
         <div class="dialog">
             <div class="avatar" style="grid-row: 1 / 3;"></div>
             <div class="title">
-                {$saveInstance[gc()]?.name?.replace(
+                {@html $dialogInstance[gc()]?.name?.replace(
                     "%name",
                     getSaveInfo("name"),
                 )}
             </div>
             <div class="content">
-                {#if $saveInstance[gc()]?.type === "choice"}
+                {#if $dialogInstance[gc()]?.type === "choice" || $dialogInstance[gc()]?.type === "score"}
                     <div class="choose">
-                        {#each $saveInstance[gc()]?.choice as choice}
+                        {#each $dialogInstance[gc()]?.choice as choice}
                             <button
                                 class="choice-button"
                                 onclick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
+                                    let action = $dialogInstance[gc()]?.action;
                                     setSaveInfo(
-                                        $saveInstance[gc()]?.id!,
-                                        choice,
+                                        $dialogInstance[gc()]?.id!,
+                                        typeof action === "function"
+                                            ? action(
+                                                  choice,
+                                                  getSaveInfo(
+                                                      $dialogInstance[gc()]
+                                                          ?.id!,
+                                                  ),
+                                              )
+                                            : choice,
                                     );
                                     jumpTo(true);
                                     plusOne();
@@ -493,11 +507,17 @@
         padding-left: 10px;
         font-size: 1.2rem;
         font-weight: bold;
-        color: red;
+        color: white;
     }
     .content {
         padding: 10px;
         color: white;
+        white-space: wrap;
+        overflow-y: auto;
+        word-wrap: break-word;
+    }
+    .content::-webkit-scrollbar {
+        display: none;
     }
     .choose {
         width: 100%;
@@ -512,7 +532,8 @@
         color: white;
         cursor: pointer;
         border-radius: 5px;
-        flex: 1;
+        height: 30px;
+        flex-shrink: 0;
         width: 100%;
     }
     .choice-button:hover {
