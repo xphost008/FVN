@@ -106,6 +106,9 @@ jobs:
           sed -i '/buildType/isigningConfigs {\ncreate("release") {\nval keystorePropertiesFile = rootProject.file("keystore.properties")\nval keystoreProperties = Properties()\nif (keystorePropertiesFile.exists()) {\nkeystoreProperties.load(FileInputStream(keystorePropertiesFile))\n}\nkeyAlias = keystoreProperties["keyAlias"] as String\nkeyPassword = keystoreProperties["keyPassword"] as String\nstoreFile = file(keystoreProperties["storeFile"] as String)\nstorePassword = keystoreProperties["storePassword"] as String\n}\n}' src-tauri/gen/android/app/build.gradle.kts
           # 最后在 getByName("release") 底下新增一行，完事！
           sed -i '/getByName("release")/asigningConfig = signingConfigs.getByName("release")' src-tauri/gen/android/app/build.gradle.kts
+          # 再然后修改 AndroidManifest 进行强制横屏处理！
+          sed -i '/android:name=".MainActivity"/aandroid:screenOrientation="landscape"' src-tauri/gen/android/app/src/main/AndroidManifest.xml
+          cat src-tauri/gen/android/app/src/main/AndroidManifest.xml
           # 最后再开始打包 Android。。 开始构建！！
           npm run tauri android build -- --target ${{ matrix.arch }}
       - name: Upload artifact Windows
