@@ -239,17 +239,6 @@
             } else {
                 break;
             }
-            // const key = $dialogInstance[gc() + (ps ? 1 : -1)]?.key;
-            // const value = $dialogInstance[gc() + (ps ? 1 : -1)]?.value;
-            // console.log(key, value, 2222);
-            // if (key && value) {
-            //     if (getSaveInfo(key) === value) {
-            //         break;
-            //     }
-            //     setSaveInfo("current", gc() + (ps ? 1 : -1));
-            // } else {
-            //     break;
-            // }
         }
     }
     function prev() {
@@ -257,6 +246,14 @@
         jumpTo(false);
         minusOne();
         doStyle(gc(), true);
+        let score = $dialogInstance[gc()]?.score;
+        // 下列开始判断 score 分数的回退，仅适用与 score 在 action 的返回值是 return (parseInt(rawValue) || 0 + n).toString();（n=任何数字）这种。。
+        if (score !== undefined) {
+            let choice = getSaveInfo($dialogInstance[gc()]!.id);
+            let rawScore = parseInt(getSaveInfo(score.targetId));
+            let plusScore = parseInt(score.action(choice, "0"));
+            setSaveInfo(score.targetId, (rawScore - plusScore).toString());
+        }
         currentText = replaceCurrentText($dialogInstance[gc()]?.message);
     }
     async function quick() {
@@ -311,6 +308,10 @@
                 getSaveInfo("branch1") ?? "",
                 getSaveInfo("branch2") ?? "",
                 getSaveInfo("branch3") ?? "",
+                getSaveInfo("branch4") ?? "",
+                getSaveInfo("branch5") ?? "",
+                getSaveInfo("branch6") ?? "",
+                getSaveInfo("branch7") ?? "",
             ],
         });
         console.log($saveData);
@@ -363,7 +364,7 @@
                 )}
             </div>
             <div class="content">
-                {#if $dialogInstance[gc()]?.type === "choice" || $dialogInstance[gc()]?.type === "score"}
+                {#if $dialogInstance[gc()]?.type === "choice"}
                     <div class="choose">
                         {#each $dialogInstance[gc()]?.choice as choice}
                             <button
@@ -371,19 +372,23 @@
                                 onclick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    let action = $dialogInstance[gc()]?.action;
                                     setSaveInfo(
                                         $dialogInstance[gc()]?.id!,
-                                        typeof action === "function"
-                                            ? action(
-                                                  choice,
-                                                  getSaveInfo(
-                                                      $dialogInstance[gc()]
-                                                          ?.id!,
-                                                  ),
-                                              )
-                                            : choice,
+                                        choice,
                                     );
+                                    let score = $dialogInstance[gc()]?.score;
+                                    if (score !== undefined) {
+                                        setSaveInfo(
+                                            score.targetId!,
+                                            score.action(
+                                                choice,
+                                                getSaveInfo(score.targetId),
+                                            ),
+                                        );
+                                        console.log(
+                                            getSaveInfo(score.targetId),
+                                        );
+                                    }
                                     jumpTo(true);
                                     plusOne();
                                     next(false);

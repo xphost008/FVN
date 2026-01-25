@@ -215,7 +215,25 @@ export const dialogInstanceR = readable([
     message: "接下来让我讲讲今天的行动，我们要去村子外面挖草药。",
   },
 ]);
-export const dialogInstance = readable([
+interface IfInterface {
+  key: string;
+  value: string | ((branch_value: string) => boolean);
+}
+interface ScoreInterface {
+  targetId: string;
+  action: (branch: string, rawValue: string) => string;
+}
+interface DialogInterface {
+  type?: string;
+  id?: string;
+  name?: string;
+  avatar?: string;
+  message?: string;
+  choice?: Array<string>;
+  score?: ScoreInterface;
+  if?: Array<IfInterface>;
+}
+export const dialogInstance = readable<DialogInterface[]>([
   {
     name: '<span style="color: red;">%name</span>',
     avatar: "",
@@ -297,7 +315,7 @@ export const dialogInstance = readable([
     message:
       "接下来会循环生成【10个由100个啊】组成的片段！可以点击下列快进按钮进行快进！",
   },
-  ...new Array(10).fill(null).map((_, index) => ({
+  ...new Array(10).fill(null).map((_, index: number) => ({
     name: '<span style="color: red;">%name</span>',
     avatar: "",
     message: index + "啊".repeat(100),
@@ -313,6 +331,7 @@ export const dialogInstance = readable([
     id: "branch1",
     choice: ["跑步", "游泳", "打篮球"],
   },
+  // 警告：这句话无论前面选没选游泳，到了下面之后再回退，则永远回退不到这句话！
   {
     name: '<span style="color: red;">%name</span>',
     if: [
@@ -415,67 +434,78 @@ export const dialogInstance = readable([
       "首先，下列会显示一大堆的选项，这些选项会影响最终我对你的分数考核。你可以在下列选择不同的分支~",
   },
   // score 的介绍！这是个不同于 简单 choice 的分支，choice 分支一般用于一些不太重要的选项。而 score 则代表了一个加分项！
-  // score 与 choice 的唯二不同之处在于，它的 id 可以重复！
+  // score 与 choice 的唯一不同之处在于，它的 targetId 可以重复！
   // 它的 action 是一个非常棒的键值对，是一个函数，有两个参数，第一个参数是当前选取的 choice，第二个参数是上一次选取的相同 id 的值！
-  // ps：与 choice 拆成两个值纯属是我为了让剧本更好理解才拆分的。。
   {
-    type: "score",
+    type: "choice",
     id: "branch3",
     choice: ["1", "2", "3"],
-    action: (branch: string, rawValue: string) => {
-      if (branch === "1") {
-        return (parseInt(rawValue) || 0 + 1).toString();
-      } else if (branch === "2") {
-        return (parseInt(rawValue) || 0 + 2).toString();
-      } else {
-        return (parseInt(rawValue) || 0 + 3).toString();
-      }
+    score: {
+      targetId: "branch7",
+      action: (branch: string, rawValue: string) => {
+        if (branch === "1") {
+          return ((parseInt(rawValue) || 0) + 1).toString();
+        } else if (branch === "2") {
+          return ((parseInt(rawValue) || 0) + 2).toString();
+        } else {
+          return ((parseInt(rawValue) || 0) + 3).toString();
+        }
+      },
     },
   },
   {
-    type: "score",
-    id: "branch3",
+    type: "choice",
+    id: "branch4",
     choice: ["8", "4", "-2"],
-    action: (branch: string, rawValue: string) => {
-      if (branch === "8") {
-        return (parseInt(rawValue) || 0 + 8).toString();
-      } else if (branch === "4") {
-        return (parseInt(rawValue) || 0 + 4).toString();
-      } else {
-        return (parseInt(rawValue) || 0 - 2).toString();
-      }
+    score: {
+      targetId: "branch7",
+      action: (branch: string, rawValue: string) => {
+        if (branch === "8") {
+          return ((parseInt(rawValue) || 0) + 8).toString();
+        } else if (branch === "4") {
+          return ((parseInt(rawValue) || 0) + 4).toString();
+        } else {
+          return ((parseInt(rawValue) || 0) - 2).toString();
+        }
+      },
     },
   },
   {
-    type: "score",
-    id: "branch3",
+    type: "choice",
+    id: "branch5",
     choice: ["19", "0", "-7", "-99"],
-    action: (branch: string, rawValue: string) => {
-      if (branch === "19") {
-        return (parseInt(rawValue) || 0 + 19).toString();
-      } else if (branch === "0") {
-        return rawValue;
-      } else if (branch === "-7") {
-        return (parseInt(rawValue) || 0 - 7).toString();
-      } else {
-        return (parseInt(rawValue) || 0 - 99).toString();
-      }
+    score: {
+      targetId: "branch7",
+      action: (branch: string, rawValue: string) => {
+        if (branch === "19") {
+          return ((parseInt(rawValue) || 0) + 19).toString();
+        } else if (branch === "0") {
+          return rawValue;
+        } else if (branch === "-7") {
+          return ((parseInt(rawValue) || 0) - 7).toString();
+        } else {
+          return ((parseInt(rawValue) || 0) - 99).toString();
+        }
+      },
     },
   },
   {
-    type: "score",
-    id: "branch3",
+    type: "choice",
+    id: "branch6",
     choice: ["145", "51", "-76", "-233"],
-    action: (branch: string, rawValue: string) => {
-      if (branch === "145") {
-        return ((parseInt(rawValue) || 0) + 145).toString();
-      } else if (branch === "51") {
-        return ((parseInt(rawValue) || 0) + 51).toString();
-      } else if (branch === "-76") {
-        return ((parseInt(rawValue) || 0) - 76).toString();
-      } else {
-        return ((parseInt(rawValue) || 0) - 233).toString();
-      }
+    score: {
+      targetId: "branch7",
+      action: (branch: string, rawValue: string) => {
+        if (branch === "145") {
+          return ((parseInt(rawValue) || 0) + 145).toString();
+        } else if (branch === "51") {
+          return ((parseInt(rawValue) || 0) + 51).toString();
+        } else if (branch === "-76") {
+          return ((parseInt(rawValue) || 0) - 76).toString();
+        } else {
+          return ((parseInt(rawValue) || 0) - 233).toString();
+        }
+      },
     },
   },
   // 接下来的 if 分支是对 score 的判断！可以看见它的 value 所接收的是一个函数！！函数返回一个布尔值，传入的 branch_value 就是我们的 key 里面的 branch 内容！
@@ -485,40 +515,40 @@ export const dialogInstance = readable([
     avatar: "",
     if: [
       {
-        key: "branch3",
+        key: "branch7",
         value: (branch_value: string) => {
           return (parseInt(branch_value) || 0) >= 100;
         },
       },
     ],
-    message: "哇哦，你的分数居然达到了惊人的%branch3，真是不可思议！！",
+    message: "哇哦，你的分数居然达到了惊人的%branch7，真是不可思议！！",
   },
   {
     name: '<span style="color: orange;">小虎</span>',
     avatar: "",
     if: [
       {
-        key: "branch3",
+        key: "branch7",
         value: (branch_value: string) => {
           let bv = parseInt(branch_value) || 0;
           return bv < 100 && bv > -100;
         },
       },
     ],
-    message: "好吧，你的分数是：%branch3，平平无奇，你当然还可以发挥得更好",
+    message: "好吧，你的分数是：%branch7，平平无奇，你当然还可以发挥得更好",
   },
   {
     name: '<span style="color: orange;">小虎</span>',
     avatar: "",
     if: [
       {
-        key: "branch3",
+        key: "branch7",
         value: (branch_value: string) => {
           return (parseInt(branch_value) || 0) <= -100;
         },
       },
     ],
     message:
-      "噢我的上帝，你在干什么？你的分数居然达到了%branch3！真是太令人吃惊了！",
+      "噢我的上帝，你在干什么？你的分数居然达到了%branch7！真是太令人吃惊了！",
   },
 ]);

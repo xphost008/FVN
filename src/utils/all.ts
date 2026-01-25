@@ -9,7 +9,7 @@ export async function init() {
     await invoke("get_all_data", {
       galleryCount: 10,
       saveCount: 40,
-      branchCount: 3,
+      branchCount: 7,
     }),
   );
   console.log(savedata);
