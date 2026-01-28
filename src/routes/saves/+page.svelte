@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { sleep } from "../../utils/all";
     import { fade } from "svelte/transition";
     import { router } from "../../utils/all";
     import { saveData } from "../../store/store";
     import { quadInOut } from "svelte/easing";
     import MyMenuButton from "../../components/input/MyMenuButton.svelte";
+    import { onMount } from "svelte";
     const saveLength = 4;
     let o1 = $state(false);
     let no = $state(true);
